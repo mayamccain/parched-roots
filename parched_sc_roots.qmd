@@ -8,12 +8,127 @@ library(readr)
 library(tidyverse)
 library(dplyr)
 library(visdat)
+library(skimr)
+library(ggplot2)
 
+sc_roots <- read.csv("/Users/mayamccain/github/parched-roots/sc_roots.csv")
 vis_dat(sc_roots)
-sc_roots <- sc_roots
+summary(sc_roots)
 ```
 
 ```{r}
-sc_roots <- sc_roots %>%
+anova <- aov(total_biomass ~ depth * treatment, data = sc_roots)
+summary(anova)
+```
+```{r}
+t_test <- t.test(total_biomass ~ treatment, data = sc_roots)
+print(t_test)
+```
+```{r}
+summary_data <- sc_roots %>%
+  filter(treatment %in% c("Control", "Drying")) %>%
+  group_by(treatment) %>%
+  summarise(
+    mean_biomass = mean(total_biomass, na.rm = TRUE),
+    se = sd(total_biomass, na.rm = TRUE) / sqrt(n())
+  )
+
+treatment_plot <- ggplot(summary_data, aes(x = treatment, y = mean_biomass, fill = treatment)) +
+  geom_col(width = 0.6) +
+  geom_errorbar(aes(ymin = mean_biomass - se, ymax = mean_biomass + se), width = 0.2) +
+  labs(
+    title = "Total Root Biomass by Treatment",
+    x = "Treatment",
+    y = "Mean Total Biomass (g/core)"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = c("Control" = "#69b3a2", "Drying" = "orange")) +
+  theme(legend.position = "none")
+print(treatment_plot)
+ggsave("biomass_by_treatment.png", plot = treatment_plot)
+```
+
+```{r}
+depth_summary <- sc_roots %>%
+  filter(depth %in% c("0-10cm", "10-20cm")) %>%
+  group_by(depth) %>%
+  summarise(
+    mean_biomass = mean(total_biomass, na.rm = TRUE),
+    se = sd(total_biomass, na.rm = TRUE) / sqrt(n())
+  )
+
+depth_plot <- ggplot(depth_summary, aes(x = depth, y = mean_biomass, fill = depth)) +
+  geom_col(width = 0.6) +
+  geom_errorbar(aes(ymin = mean_biomass - se, ymax = mean_biomass + se), width = 0.2) +
+  labs(
+    title = "Total Root Biomass by Depth",
+    x = "Soil Depth",
+    y = "Mean Total Biomass (g/core)"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = c("0-10cm" = "#69b3a2", "10-20cm" = "orange")) +
+  theme(legend.position = "none")
+print(depth_plot)
+ggsave("biomass_by_depth.png", plot = depth_plot)
+```
+
+```{r}
+plot_summary <- sc_roots %>%
+  group_by(plot) %>%
+  summarise(
+    mean_biomass = mean(total_biomass, na.rm = TRUE),
+    se = sd(total_biomass, na.rm = TRUE) / sqrt(n())
+  )
+
+plot_biomass <- ggplot(plot_summary, aes(x = plot, y = mean_biomass, fill = plot)) +
+  geom_col(width = 0.6) +
+  geom_errorbar(aes(ymin = mean_biomass - se, ymax = mean_biomass + se), width = 0.2) +
+  labs(
+    title = "Total Biomass by Plot",
+    x = "Plot",
+    y = "Mean Total Biomass (g/core)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+plot_biomass <- ggplot(plot_summary, aes(x = plot, y = mean_biomass)) +
+  geom_col(fill = "#69b3a2", width = 0.6) +
+  geom_errorbar(aes(ymin = mean_biomass - se, ymax = mean_biomass + se), width = 0.2) +
+  labs(
+    title = "Total Biomass by Plot",
+    x = "Plot",
+    y = "Mean Total Biomass (g/core)"
+  ) +
+  theme_minimal()
+
+print(plot_biomass)
+ggsave("biomass_by_plot.png", plot = plot_biomass)
+```
+
+
+```{r}
+
+biomass_by_plot_depth <- sc_roots %>%
+  filter(depth %in% c("0-10cm", "10-20cm")) %>%
+  group_by(plot, depth) %>%
+  summarise(
+    mean_biomass = mean(total_biomass, na.rm = TRUE),
+    se = sd(total_biomass, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+plot_depth <- ggplot(biomass_by_plot_depth, aes(x = plot, y = mean_biomass, fill = depth)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_errorbar(aes(ymin = mean_biomass - se, ymax = mean_biomass + se),
+                position = position_dodge(width = 0.7), width = 0.2) +
+  labs(
+    title = "Total Biomass by Plot and Depth",
+    x = "Plot",
+    y = "Mean Total Biomass (g/core)",
+    fill = "Soil Depth"
+  ) +
+  scale_fill_manual(values = c("0-10cm" = "#69b3a2", "10-20cm" = "orange")) +
+  theme_minimal()
+ggsave("biomass_by_depth_plot.png", plot = plot_depth)
 ```
 
