@@ -1,0 +1,19 @@
+---
+title: "Parched SC Roots"
+format: html
+editor: visual
+---
+```{r}
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(visdat)
+
+vis_dat(sc_roots)
+sc_roots <- sc_roots
+```
+
+```{r}
+sc_roots <- sc_roots %>%
+```
+
